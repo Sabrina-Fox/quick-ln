@@ -24,3 +24,34 @@ const SSL = {
     key: fs.readFileSync('./ssl/key.pem'),
     cert: fs.readFileSync('./ssl/cert.pem'),
 };
+const disallowedCharaters = new RegExp('[^\x00-\x7F]+');
+const corsOption = {
+    origin: '*',
+};
+
+const db = mysql.createConnection(dbConfig);
+
+function query(SQLquery, data) {
+    return new Promise((resolve, reject) => {
+        db.query(SQLquery, data, (err, response) => {
+            if (err) reject(err);
+            resolve(response);
+        });
+    });
+};
+
+function getTime() {
+    let options = {
+        hour: 'numeric',
+        minute: 'numeric',
+        seconds: 'numeric',
+        fractionalSecondDigits: 3
+    };
+    let date = new Date().toLocaleDateString('ja');
+    let time = new Date().toLocaleTimeString('en', options);
+    let timezone = new Date().toLocaleTimeString('en', {timeZoneName: 'short'}).split(' ').pop();
+    return chalk.bgWhite.black(`${date}-${time} `)+chalk.bold.bgBlue.white(timezone);
+};
+function logWithTime(message) {
+    console.log(`${getTime()} ${message}`);
+};
