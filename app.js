@@ -58,3 +58,27 @@ function getTime() {
 function logWithTime(message) {
     console.log(`${getTime()} ${message}`);
 };
+
+// Create web server
+const webServer = https.createServer(SSL, app);
+webServer.listen(serverConfig.port, serverConfig.ip, () => {
+    logWithTime(`Listening on ${serverConfig.ip}:${serverConfig.port}`);
+});
+
+app.use(cors(corsOption));
+
+// Handle OPTIONS requests
+app.options('/', (req, res) => {
+    res.set('Access-Control-Allow-Headers','Content-Type, Authorization');
+    res.end();
+});
+
+// Handle /favicon.ico GET requests
+app.get('/favicon.ico', (req, res) => {
+    res.status(403);
+    res.end();
+});
+
+app.get('/', async (req, res) => {
+    res.end('owo')
+});
