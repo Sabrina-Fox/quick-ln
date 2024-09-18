@@ -20,6 +20,9 @@ const serverConfig = {
     ip: process.env.SERVER_LISTEN_IP,
     port: process.env.SERVER_LISTEN_PORT
 };
+const appConfig = {
+    url: process.env.APP_URL
+}
 const SSL = {
     key: fs.readFileSync('./ssl/key.pem'),
     cert: fs.readFileSync('./ssl/cert.pem'),
