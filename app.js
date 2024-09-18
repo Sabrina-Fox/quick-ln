@@ -21,7 +21,8 @@ const serverConfig = {
     port: process.env.SERVER_LISTEN_PORT
 };
 const appConfig = {
-    url: process.env.APP_URL
+    url: process.env.APP_URL,
+    managementPath: process.env.APP_MANAGEMENT_PATH
 }
 const SSL = {
     key: fs.readFileSync('./ssl/key.pem'),
