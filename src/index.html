@@ -3,14 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="index.css">
     <title>quck ln</title>
 </head>
 <body>
-    <input type="text" name="username" id="username" placeholder="username">
-    <input type="text" name="password" id="password" placeholder="password">
-    <button>Get List</button><br>
-    <input type="text" name="path" id="path" placeholder="path">
-    <input type="text" name="destination" id="destination" placeholder="destination">
-    <button>Create ln</button><br>
+    <div>
+        <input type="text" name="username" id="username" placeholder="username">
+        <input type="text" name="password" id="password" placeholder="password">
+        <button id="get">Get List</button>
+        <p id="get_error"></p>
+    </div>
+    <div>
+        <input type="text" name="path" id="path" placeholder="path">
+        <input type="text" name="destination" id="destination" placeholder="destination">
+        <button id="create">Create ln</button>
+        <p id="create_error"></p>
+    </div>
+    <br>
+    <div id="list">
+    </div>
 </body>
+<script src="index.js"></script>
 </html>

@@ -101,6 +101,33 @@ app.get('/', async (req, res) => {
 
 app.get(`/${appConfig.managementPath}`, async (req, res) => {
     const ip = getIP(req);
+    const pathPrefix = '/' + appConfig.managementPath;
+    logWithTime(`${chalk.bold(ip)} ${req.method} ${req.url}`);
     res.status(200);
-    res.sendFile(path.resolve() + '/src/index.html');
+    res.sendFile(path.resolve() + '/src/' + req.url.slice(pathPrefix.length));
+});
+
+app.get(`/*`, async (req, res) => {
+    const ip = getIP(req);
+    logWithTime(`${chalk.bold(ip)} ${req.method} ${req.url}`);
+    res.status(200);
+    res.sendFile(path.resolve() + '/src/' + req.url.slice(1));
+});
+
+app.post('/api/get', async (req, res) => {
+    const ip = getIP(req);
+    logWithTime(`${chalk.bold(ip)} ${req.method} ${req.url}`);
+    res.set('Content-Type', 'application/json');
+});
+
+app.post('/api/create', async (req, res) => {
+    const ip = getIP(req);
+    logWithTime(`${chalk.bold(ip)} ${req.method} ${req.url}`);
+    res.set('Content-Type', 'application/json');
+});
+
+app.post('/api/delete', async (req, res) => {
+    const ip = getIP(req);
+    logWithTime(`${chalk.bold(ip)} ${req.method} ${req.url}`);
+    res.set('Content-Type', 'application/json');
 });
