@@ -1,10 +1,12 @@
 import fs from 'fs';
+import path from 'path';
 import chalk from 'chalk';
 import https from 'https';
 import express from 'express';
 import expressBodyParserErrorHandler from 'express-body-parser-error-handler';
 import cors from 'cors';
 import mysql from 'mysql';
+import { dirname } from 'path';
 
 const app = express();
 const jsonParser = express.json();
@@ -44,6 +46,16 @@ function query(SQLquery, data) {
     });
 };
 
+function getIP(req){
+    if (process.env.IP_MODE === 'live') {
+        return req.headers['cf-connecting-ip'];
+    };
+    if (process.env.IP_MODE === 'dev') {
+        return req.socket.remoteAddress;
+    };
+    return '0.0.0.0';
+};
+
 function getTime() {
     let options = {
         hour: 'numeric',
@@ -69,10 +81,10 @@ webServer.listen(serverConfig.port, serverConfig.ip, () => {
 app.use(cors(corsOption));
 
 // Handle OPTIONS requests
-app.options('/', (req, res) => {
-    res.set('Access-Control-Allow-Headers','Content-Type, Authorization');
-    res.end();
-});
+// app.options('/', (req, res) => {
+//     res.set('Access-Control-Allow-Headers','Content-Type, Authorization');
+//     res.end();
+// });
 
 // Handle /favicon.ico GET requests
 app.get('/favicon.ico', (req, res) => {
@@ -81,5 +93,14 @@ app.get('/favicon.ico', (req, res) => {
 });
 
 app.get('/', async (req, res) => {
-    res.end('owo')
+    const ip = getIP(req);
+    logWithTime(`${chalk.bold(ip)} ${req.method} ${req.url}`);
+    res.status(200);
+    res.send(':3');
+});
+
+app.get(`/${appConfig.managementPath}`, async (req, res) => {
+    const ip = getIP(req);
+    res.status(200);
+    res.sendFile(path.resolve() + '/src/index.html');
 });
