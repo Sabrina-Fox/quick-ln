@@ -8,16 +8,16 @@
 </head>
 <body>
     <div>
-        <input type="text" name="username" id="username" placeholder="username">
-        <input type="text" name="password" id="password" placeholder="password">
+        <p>Username: </p><input type="text" name="username" id="username" placeholder="username">
+        <p>Password: &nbsp;&nbsp;&nbsp;</p><input type="text" name="password" id="password" placeholder="password">
         <button id="get" onclick="getList()">Get List</button>
-        <p id="get_error"></p>
+        <p id="get_error" class="error"></p>
     </div>
     <div>
-        <input type="text" name="path" id="path" placeholder="path">
-        <input type="text" name="destination" id="destination" placeholder="destination">
+        <p>Path: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p><input type="text" name="path" id="path" placeholder="path">
+        <p>Destination: </p><input type="text" name="destination" id="destination" placeholder="destination">
         <button id="create" onclick="createLink()">Create ln</button>
-        <p id="create_error"></p>
+        <p id="create_error" class="error"></p>
     </div>
     <br>
     <div id="list">
