@@ -6,7 +6,7 @@ import express from 'express';
 import expressBodyParserErrorHandler from 'express-body-parser-error-handler';
 import cors from 'cors';
 import mysql from 'mysql';
-import { dirname } from 'path';
+import { createHash } from 'node:crypto'
 
 const app = express();
 const jsonParser = express.json();
@@ -67,16 +67,22 @@ function getIP(req){
     return '0.0.0.0';
 };
 
-function getTime() {
+function getTime(unformatted) {
     let options = {
         hour: 'numeric',
         minute: 'numeric',
         seconds: 'numeric',
-        fractionalSecondDigits: 3
+        fractionalSecondDigits: 3,
+        hour12: true
     };
     let date = new Date().toLocaleDateString('ja');
-    let time = new Date().toLocaleTimeString('en', options);
     let timezone = new Date().toLocaleTimeString('en', {timeZoneName: 'short'}).split(' ').pop();
+    if (unformatted === true) {
+        options.hour12 = false;
+        let time = new Date().toLocaleTimeString('en', options);
+        return `${date} ${time}`;
+    }
+    let time = new Date().toLocaleTimeString('en', options);
     return chalk.bgWhite.black(`${date}-${time} `)+chalk.bold.bgBlue.white(timezone);
 };
 function logWithTime(message) {
@@ -129,22 +135,50 @@ app.post('/api/get', jsonParser, bodyParserErrorHandler, async (req, res) => {
     const ip = getIP(req);
     logWithTime(`${chalk.bold(ip)} ${req.method} ${req.url}`);
     logWithTime(`Username: ${chalk.bold(req.body.username)}`);
-    res.set('Content-Type', 'application/json');
-    res.end(JSON.stringify({test: "1234", test2: "54522"}));
+    const passwordHash = createHash('sha512').update(req.body.password).digest('hex');
+    let userQueryRes = await query(`SELECT * FROM users WHERE username = ?;`, [req.body.username]);
+    if (userQueryRes[0] === undefined) {
+        console.log('user does not exist');
+        return res.json({status: "error", auth_message: "User does not exist."});
+    };
+    if (userQueryRes[0].password !== passwordHash) {
+        console.log('incorrect password');
+        return res.json({status: "error", auth_message: "Password incorrect."});
+    }
+    let lnQueryRes = await query('SELECT * FROM ln WHERE owner = ?', [req.body.username]);
+    console.log('links returned');
+    res.json({status: "ok", links: lnQueryRes});
 });
 
 app.post('/api/create', jsonParser, bodyParserErrorHandler, async (req, res) => {
     const ip = getIP(req);
     logWithTime(`${chalk.bold(ip)} ${req.method} ${req.url}`);
     logWithTime(`Username: ${chalk.bold(req.body.username)} Path: ${chalk.bold(req.body.path)} Dest: ${chalk.bold(req.body.destination)}`);
-    res.set('Content-Type', 'application/json');
-    res.end();
+    const passwordHash = createHash('sha512').update(req.body.password).digest('hex');
+    let userQueryRes = await query(`SELECT * FROM users WHERE username = ?;`, [req.body.username]);
+    if (userQueryRes[0] === undefined) {
+        console.log('user does not exist');
+        return res.json({status: "error", auth_message: "User does not exist."});
+    };
+    if (userQueryRes[0].password !== passwordHash) {
+        console.log('incorrect password');
+        return res.json({status: "error", auth_message: "Password incorrect."});
+    }
+    let lnQueryRes = await query('SELECT * FROM ln WHERE path = ?', [req.body.path]);
+    if (lnQueryRes[0] !== undefined) {
+        console.log('path already exist');
+        return res.json({status: "error", ln_message: "Path already exist."});
+    }
+    let newID = crypto.randomUUID().toUpperCase();
+    await query('INSERT INTO ln (id, owner, path, destination, creation_time) VALUES (?, ?, ?, ?, ?)',[newID, req.body.username, req.body.path, req.body.destination, getTime(true)]);
+    console.log('ln created');
+    res.json({status: "ok"});
 });
 
 app.post('/api/delete', jsonParser, bodyParserErrorHandler, async (req, res) => {
     const ip = getIP(req);
     logWithTime(`${chalk.bold(ip)} ${req.method} ${req.url}`);
     logWithTime(`Username: ${chalk.bold(req.body.username)} ID: ${chalk.bold(req.body.id)}`);
-    res.set('Content-Type', 'application/json');
-    res.end();
+
+    res.json({status: "ok"});
 });
