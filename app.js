@@ -10,6 +10,17 @@ import { dirname } from 'path';
 
 const app = express();
 const jsonParser = express.json();
+const bodyParserErrorHandler = expressBodyParserErrorHandler({
+    onError: (err, req, res) => {
+        const ip = chalk.bold(getIP(req));
+        const country = chalk.bgBlue.bold(req.headers['cf-ipcountry']);
+        logWithTime(`${ip} ${country} ${req.method} ${decodeURI(req.url)} Mode: ${chalk.bold(req.headers['sec-fetch-mode'])}`);
+        logWithTime(`${ip} ${country} ${chalk.bgRed(err)}`);
+    },
+    errorMessage: (err) => {
+        return "stinky request";
+    }
+});
 
 const dbConfig = {
     host: process.env.DB_HOST,
@@ -114,20 +125,26 @@ app.get(`/*`, async (req, res) => {
     res.sendFile(path.resolve() + '/src/' + req.url.slice(1));
 });
 
-app.post('/api/get', async (req, res) => {
+app.post('/api/get', jsonParser, bodyParserErrorHandler, async (req, res) => {
     const ip = getIP(req);
     logWithTime(`${chalk.bold(ip)} ${req.method} ${req.url}`);
+    logWithTime(`Username: ${chalk.bold(req.body.username)}`);
     res.set('Content-Type', 'application/json');
+    res.end(JSON.stringify({test: "1234", test2: "54522"}));
 });
 
-app.post('/api/create', async (req, res) => {
+app.post('/api/create', jsonParser, bodyParserErrorHandler, async (req, res) => {
     const ip = getIP(req);
     logWithTime(`${chalk.bold(ip)} ${req.method} ${req.url}`);
+    logWithTime(`Username: ${chalk.bold(req.body.username)} Path: ${chalk.bold(req.body.path)} Dest: ${chalk.bold(req.body.destination)}`);
     res.set('Content-Type', 'application/json');
+    res.end();
 });
 
-app.post('/api/delete', async (req, res) => {
+app.post('/api/delete', jsonParser, bodyParserErrorHandler, async (req, res) => {
     const ip = getIP(req);
     logWithTime(`${chalk.bold(ip)} ${req.method} ${req.url}`);
+    logWithTime(`Username: ${chalk.bold(req.body.username)} ID: ${chalk.bold(req.body.id)}`);
     res.set('Content-Type', 'application/json');
+    res.end();
 });
