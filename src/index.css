@@ -16,3 +16,6 @@ p.delete_error {
 a {
     color: blue;
 }
+table {
+    border: 2px solid rgb(140 140 140);
+}
