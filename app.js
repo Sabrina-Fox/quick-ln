@@ -47,7 +47,7 @@ const corsOption = {
     origin: '*',
 };
 
-const blacklistedUserAgent = ['Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)']
+const blacklistedUserAgent = ['Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)'];
 
 const db = mysql.createConnection(dbConfig);
 
@@ -114,10 +114,11 @@ async function updateUser(username, ip) {
 };
 
 function checkBlacklistedUserAgent(useragent) {
+    let match = false
     blacklistedUserAgent.forEach((ua) => {
-        if (useragent === ua) { return true };
+        if (useragent === ua) { match = true };
     });
-    return false;
+    return match;
 };
 
 // Create web server
@@ -247,7 +248,7 @@ app.get(`/${appConfig.lnPrefix}/*`, async (req, res) => {
     const ip = getIP(req);
     const prefix = '/' + appConfig.lnPrefix + '/';
     logWithTime(`${req.method} ${req.url} Referer: ${req.headers.referer}`, ip);
-    if (checkBlacklistedUserAgent(req.headers['user-agent']) === true ) {
+    if (checkBlacklistedUserAgent(req.headers['user-agent'])) {
         res.status(403);
         return res.end(errorResAndLog(ip, 'plaintext', 'Forbidden User Agent.'));
     }
