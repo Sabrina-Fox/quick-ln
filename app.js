@@ -160,7 +160,7 @@ app.post('/api/get', jsonParser, bodyParserErrorHandler, async (req, res) => {
     };
     let lnQueryRes = await query('SELECT * FROM ln WHERE owner = ?', [req.body.username]);
     logWithTime('ln returned', ip);
-    res.json({status: "ok", links: lnQueryRes});
+    res.json({status: "ok", url: appConfig.url, prefix: appConfig.lnPrefix, links: lnQueryRes});
 });
 
 app.post('/api/create', jsonParser, bodyParserErrorHandler, async (req, res) => {
