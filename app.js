@@ -235,7 +235,7 @@ app.post('/api/delete', jsonParser, bodyParserErrorHandler, async (req, res) => 
 app.get(`/${appConfig.lnPrefix}/*`, async (req, res) => {
     const ip = getIP(req);
     const prefix = '/' + appConfig.lnPrefix + '/';
-    logWithTime(`${req.method} ${req.url} Referer: ${req.header.referer}`, ip);
+    logWithTime(`${req.method} ${req.url} Referer: ${req.headers.referer}`, ip);
     let lnQueryRes = await query('SELECT * FROM ln WHERE path = ?', [req.url.slice(prefix.length)]);
     if (lnQueryRes[0] === undefined) {
         res.status(404);
@@ -246,6 +246,7 @@ app.get(`/${appConfig.lnPrefix}/*`, async (req, res) => {
         return res.end('ln use limit exceeded.');
     };
     await query('UPDATE ln SET use_count = ?, last_used = ? WHERE id = ?', [lnQueryRes[0].use_count + 1, getTime(true), lnQueryRes[0].id]);
+    query('INSERT INTO log (time, path, ip, user_agent, referer) VALUES ()',[]);
     logWithTime(`Redirected to ${lnQueryRes[0].destination}`, ip);
     res.redirect(307, lnQueryRes[0].destination);
 });
