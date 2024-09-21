@@ -105,6 +105,10 @@ function errorResAndLog(ip, type, message) {
     };
 };
 
+async function updateUser(username, ip) {
+    await query('UPDATE users SET last_seen = ?, last_seen_ip = ? WHERE username = ?', [getTime(true), ip, username]);
+};
+
 // Create web server
 https.globalAgent = new https.Agent({
     keepAlive: true
@@ -159,6 +163,7 @@ app.post('/api/get', jsonParser, bodyParserErrorHandler, async (req, res) => {
         return res.json(errorResAndLog(ip, 'auth', 'Password incorrect.'));
     };
     let lnQueryRes = await query('SELECT * FROM ln WHERE owner = ?', [req.body.username]);
+    updateUser(req.body.username, ip);
     logWithTime('ln returned', ip);
     res.json({status: "ok", url: appConfig.url, prefix: appConfig.lnPrefix, links: lnQueryRes});
 });
@@ -187,6 +192,7 @@ app.post('/api/create', jsonParser, bodyParserErrorHandler, async (req, res) => 
     };
     let newID = crypto.randomUUID().toUpperCase();
     await query('INSERT INTO ln (id, owner, path, destination, creation_time) VALUES (?, ?, ?, ?, ?)',[newID, req.body.username, req.body.path, req.body.destination, getTime(true)]);
+    updateUser(req.body.username, ip);
     logWithTime(`${newID} created`, ip);
     res.json({status: "ok"});
 });
@@ -211,6 +217,7 @@ app.post('/api/delete', jsonParser, bodyParserErrorHandler, async (req, res) => 
         return res.json(errorResAndLog(ip, 'delete', 'ln does not exist.'));
     };
     await query('DELETE FROM ln WHERE id = ?', [req.body.id]);
+    updateUser(req.body.username, ip);
     logWithTime(`${req.body.id} deleted`, ip);
     res.json({status: "ok"});
 });
