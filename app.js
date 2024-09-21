@@ -196,9 +196,11 @@ app.post('/api/create', jsonParser, bodyParserErrorHandler, async (req, res) => 
     let newID = crypto.randomUUID().toUpperCase();
     switch (req.body.enableUseLimit) {
         case true:
-            return await query('INSERT INTO ln (id, owner, path, destination, creation_time, use_limit) VALUES (?, ?, ?, ?, ?, ?)',[newID, req.body.username, req.body.path, req.body.destination, getTime(true), req.body.useLimit]);
+            await query('INSERT INTO ln (id, owner, path, destination, creation_time, use_limit) VALUES (?, ?, ?, ?, ?, ?)',[newID, req.body.username, req.body.path, req.body.destination, getTime(true), req.body.useLimit]);
+            break;
         case false:
-            return await query('INSERT INTO ln (id, owner, path, destination, creation_time) VALUES (?, ?, ?, ?, ?)',[newID, req.body.username, req.body.path, req.body.destination, getTime(true)]);
+            await query('INSERT INTO ln (id, owner, path, destination, creation_time) VALUES (?, ?, ?, ?, ?)',[newID, req.body.username, req.body.path, req.body.destination, getTime(true)]);
+            break;
     };
     updateUser(req.body.username, ip);
     logWithTime(chalk.green(`${newID} created`), ip);
