@@ -18,13 +18,16 @@ a {
     color: cyan;
 }
 table {
+    text-align: left;
+}
+table#list {
     border: 2px solid rgb(206, 206, 206);
 }
-th {
+th.list {
     color: white;
     border: 1px solid white;
 }
-td {
+td.list {
     color: white;
     border: 1px solid white;
 }

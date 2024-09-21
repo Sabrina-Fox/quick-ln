@@ -7,32 +7,39 @@
     <title>quck ln</title>
 </head>
 <body>
-    <div>
-        <p>Username: </p><input type="text" name="username" id="username" placeholder="username">
-        <p>Password: &nbsp;&nbsp;&nbsp;</p><input type="password" name="password" id="password" placeholder="password">
-        <button id="get" onclick="getList()">Get List</button>
-        <p id="get_error" class="error"></p>
-    </div>
-    <div>
-        <p>Path: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p><input type="text" name="path" id="path" placeholder="path">
-        <p>Destination: </p><input type="text" name="destination" id="destination" placeholder="destination">
-        <button id="create" onclick="createLink()">Create ln</button>
-        <p id="create_error" class="error"></p>
-    </div>
-    <div>
-        <p>Use Limit: </p><input type="number" id="use_limit" min="1" value="1" disabled>
-        <p>Enable Limit:</p><input type="checkbox" id="enable_use_limit">
-    </div>
-    <br>
+    <table>
+        <tr>
+            <th><p>Username: </p></th>
+            <th><input type="text" name="username" id="username" placeholder="username"></th>
+            <th><p>Password: </p></th>
+            <th><input type="password" name="password" id="password" placeholder="password"></th>
+            <th><button id="get" onclick="getList()">Get List</button></th>
+            <th><p id="get_error" class="error"></p></th>
+        </tr>
+        <tr>
+            <th><p>Path: </p></th>
+            <th><input type="text" name="path" id="path" placeholder="path"></th>
+            <th><p>Destination: </p></th>
+            <th><input type="text" name="destination" id="destination" placeholder="destination"></th>
+            <th><button id="get" onclick="getList()">Get List</button></th>
+            <th><p id="get_error" class="error"></p></th>
+        </tr>
+        <tr>
+            <th><p>Use Limit: </p></th>
+            <th><input type="number" id="use_limit" min="1" value="1" disabled></th>
+            <th><p>Enable Limit:</p></th>
+            <th><input type="checkbox" id="enable_use_limit"></th>
+        </tr>
+    </table>
     <table id="list">
         <tr>
-            <th>Path</th>
-            <th>Destination</th>
-            <th>Use</th>
-            <th>Limit</th>
-            <th>Creation</th>
-            <th>Last Used</th>
-            <th></th>
+            <th class="list">Path</th>
+            <th class="list">Destination</th>
+            <th class="list">Use</th>
+            <th class="list">Limit</th>
+            <th class="list">Creation</th>
+            <th class="list">Last Used</th>
+            <th class="list"></th>
         </tr>
     </table>
     <p id="delete_error" class="error"></p>
