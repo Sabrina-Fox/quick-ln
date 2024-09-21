@@ -178,6 +178,9 @@ app.post('/api/create', jsonParser, bodyParserErrorHandler, async (req, res) => 
     if (disallowedCharaters.test(req.body.path) === true || disallowedCharaters.test(req.body.destination) === true) {
         return res.json(errorResAndLog(ip, 'ln', 'Invalid character(s).'));
     };
+    if (req.body.path === '') {
+        return res.json(errorResAndLog(ip, 'ln', 'Path cannot be blank.'))
+    }
     const passwordHash = createHash('sha512').update(req.body.password).digest('hex');
     let userQueryRes = await query(`SELECT * FROM users WHERE username = ?;`, [req.body.username]);
     if (userQueryRes[0] === undefined) {
