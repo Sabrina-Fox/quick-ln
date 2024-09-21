@@ -42,7 +42,8 @@ const SSL = {
     key: fs.readFileSync('./ssl/key.pem'),
     cert: fs.readFileSync('./ssl/cert.pem'),
 };
-const disallowedCharaters = new RegExp('[^\x00-\x7F]|<|>+');
+const disallowedCharaters = new RegExp('[^\x00-\x7F]|<|>|#|%|{|}|\||\\|\^|~|\[|\]+');
+const disallowedPathCharaters = new RegExp('[;|?|:|@|=|&]+');
 const corsOption = {
     origin: '*',
 };
@@ -163,7 +164,7 @@ app.post('/api/get', jsonParser, bodyParserErrorHandler, async (req, res) => {
     const ip = getIP(req);
     logWithTime(`${req.method} ${req.url}`, ip);
     logWithTime(`Username: ${chalk.bold(req.body.username)}`, ip);
-    if (disallowedCharaters.test(req.body.username) === true || disallowedCharaters.test(req.body.password) === true) {
+    if (disallowedCharaters.test(req.body.username) || disallowedCharaters.test(req.body.password)) {
         return res.json(errorResAndLog(ip, 'auth', 'Invalid character(s).'));
     };
     const passwordHash = createHash('sha512').update(req.body.password).digest('hex');
@@ -187,12 +188,15 @@ app.post('/api/create', jsonParser, bodyParserErrorHandler, async (req, res) => 
     if (disallowedCharaters.test(req.body.username) === true || disallowedCharaters.test(req.body.password) === true) {
         return res.json(errorResAndLog(ip, 'auth', 'Invalid character(s).'));
     };
-    if (disallowedCharaters.test(req.body.path) === true || disallowedCharaters.test(req.body.destination) === true) {
-        return res.json(errorResAndLog(ip, 'ln', 'Invalid character(s).'));
+    if (disallowedCharaters.test(req.body.path) || disallowedPathCharaters.test(req.body.path)) {
+        return res.json(errorResAndLog(ip, 'ln', 'Invalid character(s) in path.'));
+    };
+    if (disallowedCharaters.test(req.body.destination)) {
+        return res.json(errorResAndLog(ip, 'ln', 'Invalid character(s) in destination.'));
     };
     if (req.body.path === '') {
         return res.json(errorResAndLog(ip, 'ln', 'Path cannot be blank.'))
-    }
+    };
     const passwordHash = createHash('sha512').update(req.body.password).digest('hex');
     let userQueryRes = await query(`SELECT * FROM users WHERE username = ?;`, [req.body.username]);
     if (userQueryRes[0] === undefined) {
@@ -251,7 +255,7 @@ app.get(`/${appConfig.lnPrefix}/*`, async (req, res) => {
     if (checkBlacklistedUserAgent(req.headers['user-agent'])) {
         res.status(403);
         return res.end(errorResAndLog(ip, 'plaintext', 'Forbidden User Agent.'));
-    }
+    };
     let lnQueryRes = await query('SELECT * FROM ln WHERE path = ?', [req.url.slice(prefix.length)]);
     if (lnQueryRes[0] === undefined) {
         res.status(404);
