@@ -38,6 +38,7 @@ const appConfig = {
     managementPath: process.env.APP_MANAGEMENT_PATH,
     lnPrefix: process.env.LN_PREFIX
 }
+const IPToken = process.env.IP2LOCATION_API_KEY;
 const SSL = {
     key: fs.readFileSync('./ssl/key.pem'),
     cert: fs.readFileSync('./ssl/cert.pem'),
@@ -59,6 +60,11 @@ function query(SQLquery, data) {
             resolve(response);
         });
     });
+};
+
+async function getIPInfo(ip) {
+    let response = await fetch(`https://api.ip2location.io/?key=${IPToken}&ip=${ip}`);
+    return await response.json();
 };
 
 function getIP(req){
@@ -265,8 +271,18 @@ app.get(`/${appConfig.lnPrefix}/*`, async (req, res) => {
         res.status(403);
         return res.end(errorResAndLog(ip, 'plaintext', 'ln use limit exceeded.'));
     };
+    let ipQueryRes = await query('SELECT * FROM ip WHERE ip = ?', [ip]);
+    let ipInfo;
+    if (!ipQueryRes[0]) {
+        ipInfo = await getIPInfo(ip);
+        await query('INSERT INTO ip SET ip = ?, country_code = ?, country_name = ?, region_name = ?, city_name = ?, is_proxy = ?',[ip, ipInfo.country_code, ipInfo.country_name, ipInfo.region_name, ipInfo.city_name, ipInfo.is_proxy]);
+        ipQueryRes[0].country_code = ipInfo.country_code;
+        ipQueryRes[0].country_name = ipInfo.country_name;
+        ipQueryRes[0].region_name = ipInfo.region_name;
+        ipQueryRes[0].city_name = ipInfo.city_name;
+    };
     await query('UPDATE ln SET use_count = ?, last_used = ? WHERE id = ?', [lnQueryRes[0].use_count + 1, getTime(true), lnQueryRes[0].id]);
-    query('INSERT INTO log (time, path, ip, user_agent, referer) VALUES (?, ?, ? ,? ,?)',[getTime(true), req.url.slice(prefix.length), ip, req.headers['user-agent'], req.headers.referer]);
+    query('INSERT INTO log (time, path, ip, user_agent, referer, country_code, country_name, region_name, city_name) VALUES (?, ?, ? ,? ,? ,? ,? ,? ,?)',[getTime(true), req.url.slice(prefix.length), ip, req.headers['user-agent'], req.headers.referer, ipQueryRes[0].country_code, ipQueryRes[0].country_name, ipQueryRes[0].region_name, ipQueryRes[0].city_name]);
     logWithTime(chalk.cyan(`Redirected to ${lnQueryRes[0].destination}`), ip);
     res.redirect(307, lnQueryRes[0].destination);
 });
