@@ -84,7 +84,7 @@ function getTime(unformatted) {
         return `${date} ${time}`;
     }
     let time = new Date().toLocaleTimeString('en', options);
-    return chalk.bgWhite.black(`${date}-${time} `)+chalk.bold.bgBlue.white(timezone);
+    return chalk.bgWhite.black.bold(`${date}-${time} `)+chalk.bold.bgBlue.white(timezone);
 };
 function logWithTime(message, ip) {
     if (ip) {
@@ -94,7 +94,7 @@ function logWithTime(message, ip) {
 };
 
 function errorResAndLog(ip, type, message) {
-    logWithTime(message, ip);
+    logWithTime(chalk.bgWhite.red(message), ip);
     switch (type) {
         case 'auth':
             return {status: "error", auth_message: message};
@@ -193,7 +193,7 @@ app.post('/api/create', jsonParser, bodyParserErrorHandler, async (req, res) => 
     let newID = crypto.randomUUID().toUpperCase();
     await query('INSERT INTO ln (id, owner, path, destination, creation_time) VALUES (?, ?, ?, ?, ?)',[newID, req.body.username, req.body.path, req.body.destination, getTime(true)]);
     updateUser(req.body.username, ip);
-    logWithTime(`${newID} created`, ip);
+    logWithTime(chalk.green(`${newID} created`), ip);
     res.json({status: "ok"});
 });
 
@@ -218,7 +218,7 @@ app.post('/api/delete', jsonParser, bodyParserErrorHandler, async (req, res) => 
     };
     await query('DELETE FROM ln WHERE id = ?', [req.body.id]);
     updateUser(req.body.username, ip);
-    logWithTime(`${req.body.id} deleted`, ip);
+    logWithTime(chalk.red(`${req.body.id} deleted`), ip);
     res.json({status: "ok"});
 });
 
