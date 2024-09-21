@@ -100,7 +100,7 @@ async function deleteLink(id) {
     if (resObject.status === 'error') {
         deleteErrorTextField.innerText = resObject.delete_message;
     };
-    // getList();
+    getList();
 };
 
 function updateUseLimitCheckboxAvailability() {
