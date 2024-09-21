@@ -35,7 +35,8 @@ const serverConfig = {
 };
 const appConfig = {
     url: process.env.APP_URL,
-    managementPath: process.env.APP_MANAGEMENT_PATH
+    managementPath: process.env.APP_MANAGEMENT_PATH,
+    lnPrefix: process.env.LN_PREFIX
 }
 const SSL = {
     key: fs.readFileSync('./ssl/key.pem'),
@@ -142,17 +143,13 @@ app.get(`/${appConfig.managementPath}`, async (req, res) => {
     res.sendFile(path.resolve() + '/src/' + req.url.slice(pathPrefix.length));
 });
 
-app.get(`/*`, async (req, res) => {
-    const ip = getIP(req);
-    logWithTime(`${chalk.bold(ip)} ${req.method} ${req.url}`);
-    res.status(200);
-    res.sendFile(path.resolve() + '/src/' + req.url.slice(1));
-});
-
 app.post('/api/get', jsonParser, bodyParserErrorHandler, async (req, res) => {
     const ip = getIP(req);
     logWithTime(`${req.method} ${req.url}`, ip);
     logWithTime(`Username: ${chalk.bold(req.body.username)}`, ip);
+    if (disallowedCharaters.test(req.body.username) === true || disallowedCharaters.test(req.body.password) === true) {
+        return res.json(errorResAndLog(ip, 'auth', 'Invalid character(s).'));
+    };
     const passwordHash = createHash('sha512').update(req.body.password).digest('hex');
     let userQueryRes = await query(`SELECT * FROM users WHERE username = ?;`, [req.body.username]);
     if (userQueryRes[0] === undefined) {
@@ -170,6 +167,12 @@ app.post('/api/create', jsonParser, bodyParserErrorHandler, async (req, res) => 
     const ip = getIP(req);
     logWithTime(`${req.method} ${req.url}`, ip);
     logWithTime(`Username: ${chalk.bold(req.body.username)} Path: ${chalk.bold(req.body.path)} Dest: ${chalk.bold(req.body.destination)}`, ip);
+    if (disallowedCharaters.test(req.body.username) === true || disallowedCharaters.test(req.body.password) === true) {
+        return res.json(errorResAndLog(ip, 'auth', 'Invalid character(s).'));
+    };
+    if (disallowedCharaters.test(req.body.path) === true || disallowedCharaters.test(req.body.destination) === true) {
+        return res.json(errorResAndLog(ip, 'ln', 'Invalid character(s).'));
+    };
     const passwordHash = createHash('sha512').update(req.body.password).digest('hex');
     let userQueryRes = await query(`SELECT * FROM users WHERE username = ?;`, [req.body.username]);
     if (userQueryRes[0] === undefined) {
@@ -192,6 +195,9 @@ app.post('/api/delete', jsonParser, bodyParserErrorHandler, async (req, res) => 
     const ip = getIP(req);
     logWithTime(`${req.method} ${req.url}`, ip);
     logWithTime(`Username: ${chalk.bold(req.body.username)} ID: ${chalk.bold(req.body.id)}`, ip);
+    if (disallowedCharaters.test(req.body.username) === true || disallowedCharaters.test(req.body.password) === true) {
+        return res.json(errorResAndLog(ip, 'auth', 'Invalid character(s).'));
+    };
     const passwordHash = createHash('sha512').update(req.body.password).digest('hex');
     let userQueryRes = await query(`SELECT * FROM users WHERE username = ?;`, [req.body.username]);
     if (userQueryRes[0] === undefined) {
@@ -207,4 +213,24 @@ app.post('/api/delete', jsonParser, bodyParserErrorHandler, async (req, res) => 
     await query('DELETE FROM ln WHERE id = ?', [req.body.id]);
     logWithTime(`${req.body.id} deleted`, ip);
     res.json({status: "ok"});
+});
+
+app.get(`/${appConfig.lnPrefix}/*`, async (req, res) => {
+    const ip = getIP(req);
+    const prefix = '/' + appConfig.lnPrefix + '/';
+    logWithTime(`${req.method} ${req.url}`, ip);
+    let lnQueryRes = await query('SELECT * FROM ln WHERE path = ?', [req.url.slice(prefix.length)]);
+    if (lnQueryRes[0] === undefined) {
+        res.status(404);
+        return res.end('ln not found');
+    }
+    logWithTime(`Redirected to ${lnQueryRes[0].destination}`, ip);
+    res.redirect(307, lnQueryRes[0].destination);
+});
+
+app.get(`/*`, async (req, res) => {
+    const ip = getIP(req);
+    logWithTime(`${req.method} ${req.url}`, ip);
+    res.status(200);
+    res.sendFile(path.resolve() + '/src/' + req.url.slice(1));
 });
