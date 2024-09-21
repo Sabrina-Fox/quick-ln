@@ -201,8 +201,3 @@ app.post('/api/delete', jsonParser, bodyParserErrorHandler, async (req, res) => 
     logWithTime('ln deleted', ip)
     res.json({status: "ok"});
 });
-
-function checkAuth(user, hash) {
-
-}
-
