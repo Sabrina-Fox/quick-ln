@@ -7,12 +7,12 @@ let createErrorText = document.getElementById('create_error');
 let useLimitField = document.getElementById('use_limit');
 let useLimitCheckbox = document.getElementById('enable_use_limit')
 let lnList = document.getElementById('list');
+let deleteErrorTextField = document.getElementById('delete_error');
 
 function clearErrorText() {
     getErrorText.innerText = '';
     createErrorText.innerText = '';
-    let deleteErrorTextFields = document.getElementsByClassName('delete_error');
-    deleteErrorTextFields.value = '';
+    deleteErrorTextField.innerText = '';
 };
 
 async function getList() {
@@ -45,13 +45,12 @@ async function getList() {
     resObject.links.forEach(element => {
         HTML+= `<tr>
                     <td><a href="${`${resObject.url}/${resObject.prefix}/${element.path}`}" target="_blank">${element.path}</a></td>
-                    <td>https://tenor.com/view/sniff-gif-26460635 </td>
                     <td><a href="${element.destination}" target="_blank">${element.destination}</a></td>
                     <td>${element.use_count}</td>
+                    <td>${element.use_limit}</td>
                     <td>${element.creation_time}</td>
                     <td>${element.last_used}</td>
                     <td><button onclick="deleteLink('${element.id}')" class="delete">Delete</button></td>
-                    <td><p id="${element.id}" class="delete_error"></p></td>
                 </tr>`;
     });
     lnList.innerHTML = HTML;
@@ -99,9 +98,9 @@ async function deleteLink(id) {
     const resObject = await res.json();
     clearErrorText();
     if (resObject.status === 'error') {
-        document.getElementById(id).innerText = resObject.delete_message;
+        deleteErrorTextField.innerText = resObject.delete_message;
     };
-    getList();
+    // getList();
 };
 
 function updateUseLimitCheckboxAvailability() {

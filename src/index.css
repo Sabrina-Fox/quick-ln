@@ -1,7 +1,11 @@
+body {
+    background-color: #3d3d3d;
+}
 p {
     display: inline;
+    color: white;
 }
-.error {
+p.error {
     color: red;
 }
 button {
@@ -10,12 +14,17 @@ button {
 button.delete {
     width:50px;
 }
-p.delete_error {
-    color: red;
-}
 a {
-    color: blue;
+    color: cyan;
 }
 table {
-    border: 2px solid rgb(140 140 140);
+    border: 2px solid rgb(206, 206, 206);
+}
+th {
+    color: white;
+    border: 1px solid white;
+}
+td {
+    color: white;
+    border: 1px solid white;
 }
