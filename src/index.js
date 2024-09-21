@@ -58,7 +58,6 @@ async function createLink() {
         enableUseLimit: useLimitCheckbox.checked,
         useLimit: useLimitField.value
     };
-    console.log(reqObject);
     const res = await fetch(`/api/create`, {
         method: "POST",
         headers: {
