@@ -13,3 +13,6 @@ button.delete {
 p.delete_error {
     color: red;
 }
+a {
+    color: blue;
+}
