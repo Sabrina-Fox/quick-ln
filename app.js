@@ -228,7 +228,7 @@ app.post('/api/delete', jsonParser, bodyParserErrorHandler, async (req, res) => 
 app.get(`/${appConfig.lnPrefix}/*`, async (req, res) => {
     const ip = getIP(req);
     const prefix = '/' + appConfig.lnPrefix + '/';
-    logWithTime(`${req.method} ${req.url}`, ip);
+    logWithTime(`${req.method} ${req.url} Referrer: ${req.header.referrer}`, ip);
     let lnQueryRes = await query('SELECT * FROM ln WHERE path = ?', [req.url.slice(prefix.length)]);
     if (lnQueryRes[0] === undefined) {
         res.status(404);
