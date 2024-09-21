@@ -247,7 +247,7 @@ app.get(`/${appConfig.lnPrefix}/*`, async (req, res) => {
     const ip = getIP(req);
     const prefix = '/' + appConfig.lnPrefix + '/';
     logWithTime(`${req.method} ${req.url} Referer: ${req.headers.referer}`, ip);
-    if (checkBlacklistedUserAgent() === true ) {
+    if (checkBlacklistedUserAgent(req.headers['user-agent']) === true ) {
         res.status(403);
         return res.end(errorResAndLog(ip, 'plaintext', 'Forbidden User Agent.'));
     }
