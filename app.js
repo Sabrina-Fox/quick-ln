@@ -77,29 +77,32 @@ function getIP(req){
     return '0.0.0.0';
 };
 
-function getTime(unformatted) {
-    let options = {
-        hour: 'numeric',
-        minute: 'numeric',
-        seconds: 'numeric',
-        fractionalSecondDigits: 3,
-        hour12: true
-    };
-    let date = new Date().toLocaleDateString('ja');
-    let timezone = new Date().toLocaleTimeString('en', {timeZoneName: 'short'}).split(' ').pop();
-    if (unformatted === true) {
-        options.hour12 = false;
-        let time = new Date().toLocaleTimeString('en', options);
-        return `${date} ${time}`;
+function formatTime(log) {
+    let date = new Date()
+    let year = date.getFullYear();
+    let month = date.getMonth() + 1;
+    let day = date.getDate();
+    let hour = date.getHours();
+    let minute = date.getMinutes();
+    let second = date.getSeconds();
+    let millisecond = date.getMilliseconds();
+    let timezone = date.toLocaleTimeString('en', {timeZoneName: 'short'}).split(' ').pop();;
+    if (log === true) {
+        return `${chalk.bold.bgWhiteBright.black(`${year}/${month}/${day}-${hour}:${minute}:${second}.${millisecond}`)}${chalk.bold.bgBlue.white(timezone)}`
     }
-    let time = new Date().toLocaleTimeString('en', options);
-    return chalk.bgWhite.black.bold(`${date}-${time} `)+chalk.bold.bgBlue.white(timezone);
+    return `${year}/${month}/${day}-${hour}:${minute}:${second}.${millisecond}`;
+}
+
+function getTime(log) {
+    const date = new Date();
+    return formatTime(log);
 };
+
 function logWithTime(message, ip) {
     if (ip) {
-        return console.log(`${getTime()} ${chalk.bold(ip)} ${message}`);
+        return console.log(`${getTime(true)} ${chalk.bold(ip)} ${message}`);
     };
-    console.log(`${getTime()} ${message}`);
+    console.log(`${getTime(true)} ${message}`);
 };
 
 function errorResAndLog(ip, type, message) {
@@ -117,7 +120,7 @@ function errorResAndLog(ip, type, message) {
 };
 
 async function updateUser(username, ip) {
-    await query('UPDATE users SET last_seen = ?, last_seen_ip = ? WHERE username = ?', [getTime(true), ip, username]);
+    await query('UPDATE users SET last_seen = ?, last_seen_ip = ? WHERE username = ?', [getTime(), ip, username]);
 };
 
 function checkBlacklistedUserAgent(useragent) {
@@ -138,12 +141,6 @@ webServer.listen(serverConfig.port, serverConfig.ip, () => {
 });
 
 app.use(cors(corsOption));
-
-// Handle OPTIONS requests
-// app.options('/', (req, res) => {
-//     res.set('Access-Control-Allow-Headers','Content-Type, Authorization');
-//     res.end();
-// });
 
 // Handle /favicon.ico GET requests
 app.get('/favicon.ico', (req, res) => {
@@ -218,10 +215,10 @@ app.post('/api/create', jsonParser, bodyParserErrorHandler, async (req, res) => 
     let newID = crypto.randomUUID().toUpperCase();
     switch (req.body.enableUseLimit) {
         case true:
-            await query('INSERT INTO ln (id, owner, path, destination, creation_time, use_limit) VALUES (?, ?, ?, ?, ?, ?)',[newID, req.body.username, req.body.path, req.body.destination, getTime(true), req.body.useLimit]);
+            await query('INSERT INTO ln (id, owner, path, destination, creation_time, use_limit) VALUES (?, ?, ?, ?, ?, ?)',[newID, req.body.username, req.body.path, req.body.destination, getTime(), req.body.useLimit]);
             break;
         case false:
-            await query('INSERT INTO ln (id, owner, path, destination, creation_time) VALUES (?, ?, ?, ?, ?)',[newID, req.body.username, req.body.path, req.body.destination, getTime(true)]);
+            await query('INSERT INTO ln (id, owner, path, destination, creation_time) VALUES (?, ?, ?, ?, ?)',[newID, req.body.username, req.body.path, req.body.destination, getTime()]);
             break;
     };
     updateUser(req.body.username, ip);
@@ -281,8 +278,8 @@ app.get(`/${appConfig.lnPrefix}/*`, async (req, res) => {
         ipQueryRes[0].region_name = ipInfo.region_name;
         ipQueryRes[0].city_name = ipInfo.city_name;
     };
-    await query('UPDATE ln SET use_count = ?, last_used = ? WHERE id = ?', [lnQueryRes[0].use_count + 1, getTime(true), lnQueryRes[0].id]);
-    query('INSERT INTO log (time, path, ip, user_agent, referer, country_code, country_name, region_name, city_name) VALUES (?, ?, ? ,? ,? ,? ,? ,? ,?)',[getTime(true), req.url.slice(prefix.length), ip, req.headers['user-agent'], req.headers.referer, ipQueryRes[0].country_code, ipQueryRes[0].country_name, ipQueryRes[0].region_name, ipQueryRes[0].city_name]);
+    await query('UPDATE ln SET use_count = ?, last_used = ? WHERE id = ?', [lnQueryRes[0].use_count + 1, getTime(), lnQueryRes[0].id]);
+    query('INSERT INTO log (time, path, ip, user_agent, referer, country_code, country_name, region_name, city_name) VALUES (?, ?, ? ,? ,? ,? ,? ,? ,?)',[getTime(), req.url.slice(prefix.length), ip, req.headers['user-agent'], req.headers.referer, ipQueryRes[0].country_code, ipQueryRes[0].country_name, ipQueryRes[0].region_name, ipQueryRes[0].city_name]);
     logWithTime(chalk.cyan(`Redirected to ${lnQueryRes[0].destination}`), ip);
     res.redirect(307, lnQueryRes[0].destination);
 });
