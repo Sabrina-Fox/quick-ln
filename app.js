@@ -36,7 +36,11 @@ const serverConfig = {
 const appConfig = {
     url: process.env.APP_URL,
     managementPath: process.env.APP_MANAGEMENT_PATH,
-    lnPrefix: process.env.LN_PREFIX
+    lnPrefix: process.env.LN_PREFIX,
+    maxUsernameLength: 100,
+    maxPasswordLength: 512,
+    maxPathLength: 2000,
+    maxDestinationLength: 65536
 }
 const IPToken = process.env.IP2LOCATION_API_KEY;
 const SSL = {
@@ -48,6 +52,7 @@ const disallowedPathCharaters = new RegExp('[;?:@=&]+');
 const corsOption = {
     origin: '*',
 };
+const fullPrefix = `${appConfig.url}/${appConfig.lnPrefix}/`;
 
 const blacklistedUserAgent = ['Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)'];
 
@@ -119,6 +124,50 @@ function errorResAndLog(ip, type, message) {
     };
 };
 
+function authInputCheck(name, pass) {
+    if (disallowedCharaters.test(name)) {
+        return 'Invalid character(s) in username.';
+    };
+    if (name.length > appConfig.maxUsernameLength) {
+        return 'Invalid username.';
+    };
+    if (pass.length > appConfig.maxPasswordLength) {
+        return 'Invalid password.';
+    }
+    return false;
+};
+
+function pathAndDestinationCheck(path, destination) {
+    if (disallowedCharaters.test(path) || disallowedPathCharaters.test(path)) {
+        return 'Invalid character(s) in path.';
+    };
+    if (disallowedCharaters.test(destination)) {
+        return 'Invalid character(s) in destination.';
+    };
+    if (path === '') {
+        return 'Path cannot be blank.';
+    };
+    if (path.length > (appConfig.maxPathLength - fullPrefix.length)) {
+        return 'Path length exceeded limit.';
+    };
+    if (destination.length > appConfig.maxDestinationLength) {
+        return 'Destination length exceeded limit.';
+    };
+    return false;
+};
+
+async function authCheck(user, pass) {
+    let userQueryRes = await query(`SELECT * FROM users WHERE username = ?;`, [user]);
+    if (userQueryRes[0] === undefined) {
+        return 'User does not exist.';
+    };
+    const passwordHash = createHash('sha512').update(pass).digest('hex');
+    if (userQueryRes[0].password !== passwordHash) {
+        return 'Password incorrect.';
+    };
+    return false;
+};
+
 async function updateUser(username, ip) {
     await query('UPDATE users SET last_seen = ?, last_seen_ip = ? WHERE username = ?', [getTime(), ip, username]);
 };
@@ -167,16 +216,12 @@ app.post('/api/get', jsonParser, bodyParserErrorHandler, async (req, res) => {
     const ip = getIP(req);
     logWithTime(`${req.method} ${req.url}`, ip);
     logWithTime(`Username: ${chalk.bold(req.body.username)}`, ip);
-    if (disallowedCharaters.test(req.body.username)) {
-        return res.json(errorResAndLog(ip, 'auth', 'Invalid character(s) in username.'));
+    let message;
+    if (message = authInputCheck(req.body.username, req.body.password)) {
+        return res.json(errorResAndLog(ip, 'auth', message));
     };
-    const passwordHash = createHash('sha512').update(req.body.password).digest('hex');
-    let userQueryRes = await query(`SELECT * FROM users WHERE username = ?;`, [req.body.username]);
-    if (userQueryRes[0] === undefined) {
-        return res.json(errorResAndLog(ip, 'auth', 'User does not exist.'));
-    };
-    if (userQueryRes[0].password !== passwordHash) {
-        return res.json(errorResAndLog(ip, 'auth', 'Password incorrect.'));
+    if (message = await authCheck(req.body.username, req.body.password)) {
+        return res.json(errorResAndLog(ip, 'auth', message));
     };
     let lnQueryRes = await query('SELECT * FROM ln WHERE owner = ?', [req.body.username]);
     updateUser(req.body.username, ip);
@@ -188,25 +233,15 @@ app.post('/api/create', jsonParser, bodyParserErrorHandler, async (req, res) => 
     const ip = getIP(req);
     logWithTime(`${req.method} ${req.url}`, ip);
     logWithTime(`Username: ${chalk.bold(req.body.username)} Path: ${chalk.bold(req.body.path)} Dest: ${chalk.bold(req.body.destination)}`, ip);
-    if (disallowedCharaters.test(req.body.username)) {
-        return res.json(errorResAndLog(ip, 'auth', 'Invalid character(s) in username.'));
+    let message;
+    if (message = authInputCheck(req.body.username, req.body.password)) {
+        return res.json(errorResAndLog(ip, 'auth', message));
     };
-    if (disallowedCharaters.test(req.body.path) || disallowedPathCharaters.test(req.body.path)) {
-        return res.json(errorResAndLog(ip, 'ln', 'Invalid character(s) in path.'));
+    if (message = pathAndDestinationCheck(req.body.path, req.body.destination)) {
+        return res.json(errorResAndLog(ip, 'ln', message));
     };
-    if (disallowedCharaters.test(req.body.destination)) {
-        return res.json(errorResAndLog(ip, 'ln', 'Invalid character(s) in destination.'));
-    };
-    if (req.body.path === '') {
-        return res.json(errorResAndLog(ip, 'ln', 'Path cannot be blank.'))
-    };
-    const passwordHash = createHash('sha512').update(req.body.password).digest('hex');
-    let userQueryRes = await query(`SELECT * FROM users WHERE username = ?;`, [req.body.username]);
-    if (userQueryRes[0] === undefined) {
-        return res.json(errorResAndLog(ip, 'auth', 'User does not exist.'));
-    };
-    if (userQueryRes[0].password !== passwordHash) {
-        return res.json(errorResAndLog(ip, 'auth', 'Password incorrect.'));
+    if (message = await authCheck(req.body.username, req.body.password)) {
+        return res.json(errorResAndLog(ip, 'auth', message));
     };
     let lnQueryRes = await query('SELECT * FROM ln WHERE path = ?', [req.body.path]);
     if (lnQueryRes[0] !== undefined) {
@@ -233,13 +268,12 @@ app.post('/api/delete', jsonParser, bodyParserErrorHandler, async (req, res) => 
     if (disallowedCharaters.test(req.body.username)) {
         return res.json(errorResAndLog(ip, 'auth', 'Invalid character(s) in username.'));
     };
-    const passwordHash = createHash('sha512').update(req.body.password).digest('hex');
-    let userQueryRes = await query(`SELECT * FROM users WHERE username = ?;`, [req.body.username]);
-    if (userQueryRes[0] === undefined) {
-        return res.json(errorResAndLog(ip, 'auth', 'User does not exist.'));
+    let message;
+    if (message = authInputCheck(req.body.username, req.body.password)) {
+        return res.json(errorResAndLog(ip, 'auth', message));
     };
-    if (userQueryRes[0].password !== passwordHash) {
-        return res.json(errorResAndLog(ip, 'auth', 'Password incorrect.'));
+    if (message = await authCheck(req.body.username, req.body.password)) {
+        return res.json(errorResAndLog(ip, 'auth', message));
     };
     let lnQueryRes = await query('SELECT * FROM ln WHERE id = ?', [req.body.id]);
     if (lnQueryRes[0] === undefined) {
