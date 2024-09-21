@@ -34,8 +34,8 @@ async function getList() {
     let HTML = '';
     resObject.links.forEach(element => {
         HTML+= `<div>
-                <p>Path: </p><a href="${`${resObject.url}/${resObject.prefix}/${element.path}`}">${element.path}</a>
-                <p>Destination: </p><a href="${element.destination}">${element.destination}</a>
+                <p>Path: </p><a href="${`${resObject.url}/${resObject.prefix}/${element.path}`}" target="_blank">${element.path}</a>
+                <p>Destination: </p><a href="${element.destination}" target="_blank">${element.destination}</a>
                 <p>Use: ${element.use_count}</p>
                 <p>Limit: ${element.use_limit}</p>
                 <p>Creation: ${element.creation_time}</p>
