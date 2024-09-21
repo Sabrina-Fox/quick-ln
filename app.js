@@ -85,11 +85,27 @@ function getTime(unformatted) {
     let time = new Date().toLocaleTimeString('en', options);
     return chalk.bgWhite.black(`${date}-${time} `)+chalk.bold.bgBlue.white(timezone);
 };
-function logWithTime(message) {
+function logWithTime(message, ip) {
+    if (ip) {
+        return console.log(`${getTime()} ${chalk.bold(ip)} ${message}`);
+    };
     console.log(`${getTime()} ${message}`);
 };
 
+function errorResAndLog(ip, type, message) {
+    logWithTime(message, ip);
+    switch (type) {
+        case 'auth':
+            return {status: "error", auth_message: message};
+        case 'ln':
+            return {status: "error", ln_message: message};
+    };
+};
+
 // Create web server
+https.globalAgent = new https.Agent({
+    keepAlive: true
+})
 const webServer = https.createServer(SSL, app);
 webServer.listen(serverConfig.port, serverConfig.ip, () => {
     logWithTime(`Listening on ${serverConfig.ip}:${serverConfig.port}`);
@@ -133,62 +149,60 @@ app.get(`/*`, async (req, res) => {
 
 app.post('/api/get', jsonParser, bodyParserErrorHandler, async (req, res) => {
     const ip = getIP(req);
-    logWithTime(`${chalk.bold(ip)} ${req.method} ${req.url}`);
-    logWithTime(`Username: ${chalk.bold(req.body.username)}`);
+    logWithTime(`${req.method} ${req.url}`, ip);
+    logWithTime(`Username: ${chalk.bold(req.body.username)}`, ip);
     const passwordHash = createHash('sha512').update(req.body.password).digest('hex');
     let userQueryRes = await query(`SELECT * FROM users WHERE username = ?;`, [req.body.username]);
     if (userQueryRes[0] === undefined) {
-        console.log('user does not exist');
-        return res.json({status: "error", auth_message: "User does not exist."});
+        return res.json(errorResAndLog(ip, 'auth', 'User does not exist.'));
     };
     if (userQueryRes[0].password !== passwordHash) {
-        console.log('incorrect password');
-        return res.json({status: "error", auth_message: "Password incorrect."});
+        return res.json(errorResAndLog(ip, 'auth', 'Password incorrect.'));
     };
     let lnQueryRes = await query('SELECT * FROM ln WHERE owner = ?', [req.body.username]);
-    console.log('links returned');
+    logWithTime('ln returned', ip)
     res.json({status: "ok", links: lnQueryRes});
 });
 
 app.post('/api/create', jsonParser, bodyParserErrorHandler, async (req, res) => {
     const ip = getIP(req);
-    logWithTime(`${chalk.bold(ip)} ${req.method} ${req.url}`);
-    logWithTime(`Username: ${chalk.bold(req.body.username)} Path: ${chalk.bold(req.body.path)} Dest: ${chalk.bold(req.body.destination)}`);
+    logWithTime(`${req.method} ${req.url}`, ip);
+    logWithTime(`Username: ${chalk.bold(req.body.username)} Path: ${chalk.bold(req.body.path)} Dest: ${chalk.bold(req.body.destination)}`, ip);
     const passwordHash = createHash('sha512').update(req.body.password).digest('hex');
     let userQueryRes = await query(`SELECT * FROM users WHERE username = ?;`, [req.body.username]);
     if (userQueryRes[0] === undefined) {
-        console.log('user does not exist');
-        return res.json({status: "error", auth_message: "User does not exist."});
+        return res.json(errorResAndLog(ip, 'auth', 'User does not exist.'));
     };
     if (userQueryRes[0].password !== passwordHash) {
-        console.log('incorrect password');
-        return res.json({status: "error", auth_message: "Password incorrect."});
-    }
+        return res.json(errorResAndLog(ip, 'auth', 'Password incorrect.'));
+    };
     let lnQueryRes = await query('SELECT * FROM ln WHERE path = ?', [req.body.path]);
     if (lnQueryRes[0] !== undefined) {
-        console.log('path already exist');
-        return res.json({status: "error", ln_message: "Path already exist."});
+        return res.json(errorResAndLog(ip, 'ln', 'Path already exist.'));
     };
     let newID = crypto.randomUUID().toUpperCase();
     await query('INSERT INTO ln (id, owner, path, destination, creation_time) VALUES (?, ?, ?, ?, ?)',[newID, req.body.username, req.body.path, req.body.destination, getTime(true)]);
-    console.log('ln created');
+    logWithTime('ln created', ip)
     res.json({status: "ok"});
 });
 
 app.post('/api/delete', jsonParser, bodyParserErrorHandler, async (req, res) => {
     const ip = getIP(req);
-    logWithTime(`${chalk.bold(ip)} ${req.method} ${req.url}`);
-    logWithTime(`Username: ${chalk.bold(req.body.username)} ID: ${chalk.bold(req.body.id)}`);
+    logWithTime(`${req.method} ${req.url}`, ip);
+    logWithTime(`Username: ${chalk.bold(req.body.username)} ID: ${chalk.bold(req.body.id)}`, ip);
     const passwordHash = createHash('sha512').update(req.body.password).digest('hex');
     let userQueryRes = await query(`SELECT * FROM users WHERE username = ?;`, [req.body.username]);
     if (userQueryRes[0] === undefined) {
-        console.log('user does not exist');
-        return res.json({status: "error", auth_message: "User does not exist."});
+        return res.json(errorResAndLog(ip, 'auth', 'User does not exist.'));
     };
     if (userQueryRes[0].password !== passwordHash) {
-        console.log('incorrect password');
-        return res.json({status: "error", auth_message: "Password incorrect."});
+        return res.json(errorResAndLog(ip, 'auth', 'Password incorrect.'));
     };
-
+    logWithTime('ln deleted', ip)
     res.json({status: "ok"});
 });
+
+function checkAuth(user, hash) {
+
+}
+
