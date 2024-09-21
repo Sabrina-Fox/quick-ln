@@ -144,7 +144,7 @@ app.post('/api/get', jsonParser, bodyParserErrorHandler, async (req, res) => {
     if (userQueryRes[0].password !== passwordHash) {
         console.log('incorrect password');
         return res.json({status: "error", auth_message: "Password incorrect."});
-    }
+    };
     let lnQueryRes = await query('SELECT * FROM ln WHERE owner = ?', [req.body.username]);
     console.log('links returned');
     res.json({status: "ok", links: lnQueryRes});
@@ -168,7 +168,7 @@ app.post('/api/create', jsonParser, bodyParserErrorHandler, async (req, res) => 
     if (lnQueryRes[0] !== undefined) {
         console.log('path already exist');
         return res.json({status: "error", ln_message: "Path already exist."});
-    }
+    };
     let newID = crypto.randomUUID().toUpperCase();
     await query('INSERT INTO ln (id, owner, path, destination, creation_time) VALUES (?, ?, ?, ?, ?)',[newID, req.body.username, req.body.path, req.body.destination, getTime(true)]);
     console.log('ln created');
@@ -179,6 +179,16 @@ app.post('/api/delete', jsonParser, bodyParserErrorHandler, async (req, res) => 
     const ip = getIP(req);
     logWithTime(`${chalk.bold(ip)} ${req.method} ${req.url}`);
     logWithTime(`Username: ${chalk.bold(req.body.username)} ID: ${chalk.bold(req.body.id)}`);
+    const passwordHash = createHash('sha512').update(req.body.password).digest('hex');
+    let userQueryRes = await query(`SELECT * FROM users WHERE username = ?;`, [req.body.username]);
+    if (userQueryRes[0] === undefined) {
+        console.log('user does not exist');
+        return res.json({status: "error", auth_message: "User does not exist."});
+    };
+    if (userQueryRes[0].password !== passwordHash) {
+        console.log('incorrect password');
+        return res.json({status: "error", auth_message: "Password incorrect."});
+    };
 
     res.json({status: "ok"});
 });

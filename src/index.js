@@ -56,7 +56,7 @@ async function createLink() {
     const resObject = await res.json();
     if (resObject.status === 'error') {
         getErrorText.innerText = resObject.auth_message || '';
-        createErrorText.innerText = resObject.ln_message;
+        createErrorText.innerText = resObject.ln_message || '';
         return;
     };
     getErrorText.innerText = '';
