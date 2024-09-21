@@ -47,6 +47,8 @@ const corsOption = {
     origin: '*',
 };
 
+const blacklistedUserAgent = ['Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)']
+
 const db = mysql.createConnection(dbConfig);
 
 function query(SQLquery, data) {
@@ -101,12 +103,21 @@ function errorResAndLog(ip, type, message) {
         case 'ln':
             return {status: "error", ln_message: message};
         case 'delete':
-            return {status: "error", delete_message: message}
+            return {status: "error", delete_message: message};
+        case 'plaintext':
+            return message;
     };
 };
 
 async function updateUser(username, ip) {
     await query('UPDATE users SET last_seen = ?, last_seen_ip = ? WHERE username = ?', [getTime(true), ip, username]);
+};
+
+function checkBlacklistedUserAgent(useragent) {
+    blacklistedUserAgent.forEach((ua) => {
+        if (useragent === ua) { return true };
+    });
+    return false;
 };
 
 // Create web server
@@ -236,14 +247,18 @@ app.get(`/${appConfig.lnPrefix}/*`, async (req, res) => {
     const ip = getIP(req);
     const prefix = '/' + appConfig.lnPrefix + '/';
     logWithTime(`${req.method} ${req.url} Referer: ${req.headers.referer}`, ip);
+    if (checkBlacklistedUserAgent() === true ) {
+        res.status(403);
+        return res.end(errorResAndLog(ip, 'plaintext', 'Forbidden User Agent.'));
+    }
     let lnQueryRes = await query('SELECT * FROM ln WHERE path = ?', [req.url.slice(prefix.length)]);
     if (lnQueryRes[0] === undefined) {
         res.status(404);
-        return res.end('ln not found');
+        return res.end(errorResAndLog(ip, 'plaintext', 'ln not found.'));
     };
     if (lnQueryRes[0].use_limit > 0 && lnQueryRes[0].use_count >= lnQueryRes[0].use_limit) {
         res.status(403);
-        return res.end('ln use limit exceeded.');
+        return res.end(errorResAndLog(ip, 'plaintext', 'ln use limit exceeded.'));
     };
     await query('UPDATE ln SET use_count = ?, last_used = ? WHERE id = ?', [lnQueryRes[0].use_count + 1, getTime(true), lnQueryRes[0].id]);
     query('INSERT INTO log (time, path, ip, user_agent, referer) VALUES (?, ?, ? ,? ,?)',[getTime(true), req.url.slice(prefix.length), ip, req.headers['user-agent'], req.headers.referer]);
