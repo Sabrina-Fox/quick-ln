@@ -4,6 +4,8 @@ let getErrorText = document.getElementById('get_error');
 let pathField = document.getElementById('path');
 let destinationField = document.getElementById('destination');
 let createErrorText = document.getElementById('create_error');
+let useLimitField = document.getElementById('use_limit');
+let useLimitCheckbox = document.getElementById('enable_use_limit')
 let lnList = document.getElementById('list');
 
 function clearErrorText() {
@@ -52,8 +54,11 @@ async function createLink() {
         username: usernameField.value,
         password: passwordField.value,
         path: pathField.value,
-        destination: destinationField.value
+        destination: destinationField.value,
+        enableUseLimit: useLimitCheckbox.checked,
+        useLimit: useLimitField.value
     };
+    console.log(reqObject);
     const res = await fetch(`/api/create`, {
         method: "POST",
         headers: {
@@ -91,3 +96,14 @@ async function deleteLink(id) {
     };
     getList();
 };
+
+function updateUseLimitCheckboxAvailability() {
+    if (useLimitCheckbox.checked) {
+        return useLimitField.disabled = false;
+    };
+    return useLimitField.disabled = true;
+};
+
+useLimitCheckbox.addEventListener('input', () => {
+    updateUseLimitCheckboxAvailability();
+});
