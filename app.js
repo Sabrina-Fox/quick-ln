@@ -194,7 +194,12 @@ app.post('/api/create', jsonParser, bodyParserErrorHandler, async (req, res) => 
         return res.json(errorResAndLog(ip, 'ln', 'Path already exist.'));
     };
     let newID = crypto.randomUUID().toUpperCase();
-    await query('INSERT INTO ln (id, owner, path, destination, creation_time) VALUES (?, ?, ?, ?, ?)',[newID, req.body.username, req.body.path, req.body.destination, getTime(true)]);
+    switch (req.body.enableUseLimit) {
+        case true:
+            return await query('INSERT INTO ln (id, owner, path, destination, creation_time, use_limit) VALUES (?, ?, ?, ?, ?, ?)',[newID, req.body.username, req.body.path, req.body.destination, getTime(true), req.body.useLimit]);
+        case false:
+            return await query('INSERT INTO ln (id, owner, path, destination, creation_time) VALUES (?, ?, ?, ?, ?)',[newID, req.body.username, req.body.path, req.body.destination, getTime(true)]);
+    };
     updateUser(req.body.username, ip);
     logWithTime(chalk.green(`${newID} created`), ip);
     res.json({status: "ok"});
