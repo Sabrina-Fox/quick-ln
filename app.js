@@ -164,8 +164,8 @@ app.post('/api/get', jsonParser, bodyParserErrorHandler, async (req, res) => {
     const ip = getIP(req);
     logWithTime(`${req.method} ${req.url}`, ip);
     logWithTime(`Username: ${chalk.bold(req.body.username)}`, ip);
-    if (disallowedCharaters.test(req.body.username) || disallowedCharaters.test(req.body.password)) {
-        return res.json(errorResAndLog(ip, 'auth', 'Invalid character(s).'));
+    if (disallowedCharaters.test(req.body.username)) {
+        return res.json(errorResAndLog(ip, 'auth', 'Invalid character(s) in username.'));
     };
     const passwordHash = createHash('sha512').update(req.body.password).digest('hex');
     let userQueryRes = await query(`SELECT * FROM users WHERE username = ?;`, [req.body.username]);
@@ -185,8 +185,8 @@ app.post('/api/create', jsonParser, bodyParserErrorHandler, async (req, res) => 
     const ip = getIP(req);
     logWithTime(`${req.method} ${req.url}`, ip);
     logWithTime(`Username: ${chalk.bold(req.body.username)} Path: ${chalk.bold(req.body.path)} Dest: ${chalk.bold(req.body.destination)}`, ip);
-    if (disallowedCharaters.test(req.body.username) === true || disallowedCharaters.test(req.body.password) === true) {
-        return res.json(errorResAndLog(ip, 'auth', 'Invalid character(s).'));
+    if (disallowedCharaters.test(req.body.username)) {
+        return res.json(errorResAndLog(ip, 'auth', 'Invalid character(s) in username.'));
     };
     if (disallowedCharaters.test(req.body.path) || disallowedPathCharaters.test(req.body.path)) {
         return res.json(errorResAndLog(ip, 'ln', 'Invalid character(s) in path.'));
@@ -227,8 +227,8 @@ app.post('/api/delete', jsonParser, bodyParserErrorHandler, async (req, res) => 
     const ip = getIP(req);
     logWithTime(`${req.method} ${req.url}`, ip);
     logWithTime(`Username: ${chalk.bold(req.body.username)} ID: ${chalk.bold(req.body.id)}`, ip);
-    if (disallowedCharaters.test(req.body.username) === true || disallowedCharaters.test(req.body.password) === true) {
-        return res.json(errorResAndLog(ip, 'auth', 'Invalid character(s).'));
+    if (disallowedCharaters.test(req.body.username)) {
+        return res.json(errorResAndLog(ip, 'auth', 'Invalid character(s) in username.'));
     };
     const passwordHash = createHash('sha512').update(req.body.password).digest('hex');
     let userQueryRes = await query(`SELECT * FROM users WHERE username = ?;`, [req.body.username]);
