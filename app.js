@@ -99,6 +99,8 @@ function errorResAndLog(ip, type, message) {
             return {status: "error", auth_message: message};
         case 'ln':
             return {status: "error", ln_message: message};
+        case 'delete':
+            return {status: "error", delete_message: message}
     };
 };
 
@@ -160,7 +162,7 @@ app.post('/api/get', jsonParser, bodyParserErrorHandler, async (req, res) => {
         return res.json(errorResAndLog(ip, 'auth', 'Password incorrect.'));
     };
     let lnQueryRes = await query('SELECT * FROM ln WHERE owner = ?', [req.body.username]);
-    logWithTime('ln returned', ip)
+    logWithTime('ln returned', ip);
     res.json({status: "ok", links: lnQueryRes});
 });
 
@@ -182,7 +184,7 @@ app.post('/api/create', jsonParser, bodyParserErrorHandler, async (req, res) => 
     };
     let newID = crypto.randomUUID().toUpperCase();
     await query('INSERT INTO ln (id, owner, path, destination, creation_time) VALUES (?, ?, ?, ?, ?)',[newID, req.body.username, req.body.path, req.body.destination, getTime(true)]);
-    logWithTime('ln created', ip)
+    logWithTime(`${newID} created`, ip);
     res.json({status: "ok"});
 });
 
@@ -198,6 +200,11 @@ app.post('/api/delete', jsonParser, bodyParserErrorHandler, async (req, res) => 
     if (userQueryRes[0].password !== passwordHash) {
         return res.json(errorResAndLog(ip, 'auth', 'Password incorrect.'));
     };
-    logWithTime('ln deleted', ip)
+    let lnQueryRes = await query('SELECT * FROM ln WHERE id = ?', [req.body.id]);
+    if (lnQueryRes[0] === undefined) {
+        return res.json(errorResAndLog(ip, 'delete', 'ln does not exist.'));
+    };
+    await query('DELETE FROM ln WHERE id = ?', [req.body.id]);
+    logWithTime(`${req.body.id} deleted`, ip);
     res.json({status: "ok"});
 });

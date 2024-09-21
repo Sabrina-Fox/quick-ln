@@ -6,6 +6,13 @@ let destinationField = document.getElementById('destination');
 let createErrorText = document.getElementById('create_error');
 let lnList = document.getElementById('list');
 
+function clearErrorText() {
+    getErrorText.innerText = '';
+    createErrorText.innerText = '';
+    let deleteErrorTextFields = document.getElementsByClassName('delete_error');
+    deleteErrorTextFields.value = '';
+};
+
 async function getList() {
     let reqObject = {
         username: usernameField.value,
@@ -19,22 +26,23 @@ async function getList() {
             body: JSON.stringify(reqObject)
     });
     const resObject = await res.json();
+    clearErrorText();
     if (resObject.status === 'error') {
         getErrorText.innerText = resObject.auth_message;
         return;
     };
-    getErrorText.innerText = '';
-    createErrorText.innerText = '';
     let HTML = '';
     resObject.links.forEach(element => {
-        HTML+= `<p>Path: ${element.path}</p>
+        HTML+= `<div>
+                <p>Path: ${element.path}</p>
                 <p>Destination: ${element.destination}</p>
                 <p>Use: ${element.use_count}</p>
                 <p>Limit: ${element.use_limit}</p>
                 <p>Creation: ${element.creation_time}</p>
                 <p>Last Used: ${element.last_used}</p>
-                <button onclick="deleteLink('${element.id}')" id="delete">Delete</button>
-                <br>`;
+                <button onclick="deleteLink('${element.id}')" class="delete">Delete</button>
+                <p id="${element.id}" class="delete_error"></p>
+                <br></div>`;
     });
     lnList.innerHTML = HTML;
 };
@@ -54,13 +62,12 @@ async function createLink() {
         body: JSON.stringify(reqObject)
     });
     const resObject = await res.json();
+    clearErrorText();
     if (resObject.status === 'error') {
         getErrorText.innerText = resObject.auth_message || '';
         createErrorText.innerText = resObject.ln_message || '';
         return;
     };
-    getErrorText.innerText = '';
-    createErrorText.innerText = '';
     getList();
 };
 
@@ -77,5 +84,10 @@ async function deleteLink(id) {
         },
         body: JSON.stringify(reqObject)
     });
+    const resObject = await res.json();
+    clearErrorText();
+    if (resObject.status === 'error') {
+        document.getElementById(id).innerText = resObject.delete_message;
+    };
     getList();
 };

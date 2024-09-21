@@ -7,6 +7,9 @@ p {
 button {
     width: 100px;
 }
-button#delete {
+button.delete {
     width:50px;
+}
+p.delete_error {
+    color: red;
 }
