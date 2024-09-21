@@ -233,7 +233,11 @@ app.get(`/${appConfig.lnPrefix}/*`, async (req, res) => {
     if (lnQueryRes[0] === undefined) {
         res.status(404);
         return res.end('ln not found');
-    }
+    };
+    if (lnQueryRes[0].use_limit > 0 && lnQueryRes[0].use_count >= lnQueryRes[0].use_limit) {
+        res.status(403);
+        return res.end('ln use limit exceeded.');
+    };
     await query('UPDATE ln SET use_count = ?, last_used = ? WHERE id = ?', [lnQueryRes[0].use_count + 1, getTime(true), lnQueryRes[0].id]);
     logWithTime(`Redirected to ${lnQueryRes[0].destination}`, ip);
     res.redirect(307, lnQueryRes[0].destination);
