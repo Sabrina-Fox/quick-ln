@@ -8,12 +8,12 @@ p {
 p.error {
     color: red;
 }
-button {
+button.input {
     width: 100px;
 }
-button.delete {
+/* button.delete {
     width:50px;
-}
+} */
 a {
     color: cyan;
 }

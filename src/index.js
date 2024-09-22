@@ -7,12 +7,10 @@ let createErrorText = document.getElementById('create_error');
 let useLimitField = document.getElementById('use_limit');
 let useLimitCheckbox = document.getElementById('enable_use_limit')
 let lnList = document.getElementById('list');
-let deleteErrorTextField = document.getElementById('delete_error');
 
 function clearErrorText() {
     getErrorText.innerText = '';
     createErrorText.innerText = '';
-    deleteErrorTextField.innerText = '';
 };
 
 async function getList() {
@@ -50,7 +48,7 @@ async function getList() {
                     <td class="list">${element.use_limit}</td>
                     <td class="list">${element.creation_time}</td>
                     <td class="list">${element.last_used}</td>
-                    <td class="list"><button onclick="deleteLink('${element.id}')" class="delete">Delete</button></td>
+                    <td class="list"><button class="delete" id="${element.id}" onclick="deleteLink('${element.id}')">Delete</button></td>
                 </tr>`;
     });
     lnList.innerHTML = HTML;
@@ -98,7 +96,9 @@ async function deleteLink(id) {
     const resObject = await res.json();
     clearErrorText();
     if (resObject.status === 'error') {
-        deleteErrorTextField.innerText = resObject.delete_message;
+        let deleteButton = document.getElementById(id);
+        deleteButton.innerText = resObject.delete_message;
+        deleteButton.style.color = 'red';
     };
     getList();
 };
