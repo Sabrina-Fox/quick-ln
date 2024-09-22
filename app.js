@@ -54,6 +54,7 @@ const corsOption = {
 };
 const fullPrefix = `${appConfig.url}/${appConfig.lnPrefix}/`;
 
+const allowedFiles = ['index.css', 'index.js']
 const blacklistedUserAgent = ['Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)'];
 
 const db = mysql.createConnection(dbConfig);
@@ -170,6 +171,14 @@ async function authCheck(user, pass) {
 
 async function updateUser(username, ip) {
     await query('UPDATE users SET last_seen = ?, last_seen_ip = ? WHERE username = ?', [getTime(), ip, username]);
+};
+
+function checkAllowedFiles(url) {
+    let match = false
+    allowedFiles.forEach((file) => {
+        if (url.slice(1) === file) { match = true };
+    });
+    return match;
 };
 
 function checkBlacklistedUserAgent(useragent) {
@@ -317,6 +326,10 @@ app.get(`/${appConfig.lnPrefix}/*`, async (req, res) => {
 
 app.get(`/*`, async (req, res) => {
     const ip = getIP(req);
+    if (!checkAllowedFiles(req.url)) {
+        res.status(404);
+        return res.end();
+    };
     logWithTime(`${req.method} ${req.url}`, ip);
     res.status(200);
     res.sendFile(path.resolve() + '/src/' + req.url.slice(1));
