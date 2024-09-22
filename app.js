@@ -55,7 +55,7 @@ const corsOption = {
 const fullPrefix = `${appConfig.url}/${appConfig.lnPrefix}/`;
 
 const allowedFiles = ['index.css', 'index.js']
-const blacklistedUserAgent = ['Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)'];
+const blacklistedUserAgent = ['Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)', 'Go-http-client/1.1'];
 
 const db = mysql.createConnection(dbConfig);
 
