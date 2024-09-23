@@ -83,8 +83,7 @@ function getIP(req){
     return '0.0.0.0';
 };
 
-function formatTime(log) {
-    let date = new Date()
+function formatTime(date, log) {
     let year = date.getFullYear();
     let month = date.getMonth() + 1;
     let day = date.getDate();
@@ -101,7 +100,7 @@ function formatTime(log) {
 
 function getTime(log) {
     const date = new Date();
-    return formatTime(log);
+    return formatTime(date, log);
 };
 
 function logWithTime(message, ip) {
