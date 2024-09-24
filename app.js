@@ -57,7 +57,7 @@ const fullPrefix = `${appConfig.url}/${appConfig.lnPrefix}/`;
 const allowedFiles = ['index.css', 'index.js']
 const blacklistedUserAgent = ['Go-http-client/1.1'];
 
-const db = mysql.createConnection(dbConfig);
+const db = mysql.createPool(dbConfig);
 
 function query(SQLquery, data) {
     return new Promise((resolve, reject) => {
