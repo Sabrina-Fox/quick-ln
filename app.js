@@ -48,7 +48,7 @@ const SSL = {
     cert: fs.readFileSync('./ssl/cert.pem'),
 };
 const disallowedCharaters = new RegExp('[^\x00-\x7F]|[<>#%{}|^~\\[\\]]');
-const disallowedPathCharaters = new RegExp('[;?:@=&]+');
+const disallowedPathCharaters = new RegExp('[;?@=&]+');
 const corsOption = {
     origin: '*',
 };
